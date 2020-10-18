@@ -1,0 +1,17 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+}
+
+group 'cn.newinfinideas'
+version '0.0.1'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { setUrl("https://dl.bintray.com/hotkeytlt/maven") }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'com.github.h0tk3y.betterParse:better-parse:0.4.0'
+}
