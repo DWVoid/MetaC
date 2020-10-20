@@ -1,30 +1,17 @@
 package cn.newinfinideas.ast
 
+import cn.newinfinideas.ast.parser.Identifier
 import com.github.h0tk3y.betterParse.combinators.*
-import com.github.h0tk3y.betterParse.lexer.LiteralToken
-import com.github.h0tk3y.betterParse.lexer.TokenMatch
-import com.github.h0tk3y.betterParse.lexer.TokenMatchesSequence
-import com.github.h0tk3y.betterParse.parser.*
-
-class TokenAssert(private val inner: Parser<TokenMatch>, exp: String) : Parser<TokenMatch> {
-    private val expect = LiteralToken("", exp)
-    override fun tryParse(tokens: TokenMatchesSequence, fromPosition: Int): ParseResult<TokenMatch> {
-        return when (val innerResult = inner.tryParse(tokens, fromPosition)) {
-            is ErrorResult -> innerResult
-            is Parsed -> if (innerResult.value.text == expect.text) innerResult else MismatchedToken(
-                expect,
-                innerResult.value
-            )
-        }
-    }
-}
+import com.github.h0tk3y.betterParse.lexer.literalToken
+import com.github.h0tk3y.betterParse.parser.Parser
 
 // fast fn for assert
-fun syAssert(exp: String) = TokenAssert(symbolic, exp)
-fun idAssert(exp: String) = TokenAssert(identifier, exp)
+fun syAssert(exp: String) = literalToken(exp)
+fun idAssert(exp: String) = literalToken(exp)
 
 // operators
 // 1. basic pairs
+val blQ = syAssert("?")
 val blSep = syAssert(".")
 val blIdxL = syAssert("[")
 val blIdxR = syAssert("]")
@@ -36,42 +23,8 @@ val blL = syAssert("<")
 val blG = syAssert(">")
 
 // 2. op components
-val blEq = syAssert("=")
-val blSub = syAssert("-")
-val blAdd = syAssert("+")
-val blAst = syAssert("*")
-val blDiv = syAssert("/")
-val blRem = syAssert("%")
-val blAmp = syAssert("&")
-val blVert = syAssert("|")
-val blNeg = syAssert("!")
-val blHat = syAssert("^")
-val blQ = syAssert("?")
-
-// 3. multi-sym ops
-val blAnd = blAmp and blAmp
-val blOr = blVert and blVert
-val blShl = blL and blL
-val blShr = blG and blG
-val blLeq = blL and blEq
-val blGeq = blG and blEq
-
-// 4. self-mutation operator
-val blEqSub = blSub and blEq
-val blEqAdd = blAdd and blEq
-val blEqMul = blAst and blEq
-val blEqDiv = blDiv and blEq
-val blEqRem = blRem and blEq
-val blEqAmp = blAmp and blEq
-val blEqVert = blVert and blEq
-val blEqHat = blHat and blEq
-val blEqAnd = blAnd and blEq
-val blEqOr = blOr and blEq
-val blEqShl = blShl and blEq
-val blEqShr = blShr and blEq
-
 // names
-data class NsName(val parts: Array<String>) {
+data class NsName(val parts: Array<Identifier>) {
     override fun equals(other: Any?) = when {
         this === other -> true
         javaClass != other?.javaClass -> false
@@ -81,8 +34,8 @@ data class NsName(val parts: Array<String>) {
     override fun hashCode() = parts.contentHashCode()
 
     companion object {
-        val parser = (identifier and zeroOrMore(skip(blSep) and identifier)) map { (s, l) ->
-            NsName(mutableListOf(s.text).apply { l.mapTo(this) { tk -> tk.text } }.toTypedArray())
+        val parser = (Identifier.parser and zeroOrMore(skip(blSep) and Identifier.parser)) map { (s, l) ->
+            NsName(mutableListOf(s).apply { l.mapTo(this) { tk -> tk } }.toTypedArray())
         }
     }
 }
